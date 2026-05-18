@@ -62,6 +62,8 @@ func WaitingView(m model.Model) string {
 		meStr := ""
 		if p.ID == m.PlayerID() {
 			meStr = " (你)"
+		} else if p.IsBot {
+			meStr = " (AI)"
 		}
 		fmt.Fprintf(&playerList, "  %s %s%s\n", readyStr, p.Name, meStr)
 	}
@@ -252,6 +254,9 @@ func renderMiddleSection(state *gameClient.GameState, myPlayerID string) string 
 		if p.IsLandlord {
 			icon = common.LandlordIcon
 		}
+		if p.IsBot {
+			icon = "🤖"
+		}
 
 		nameStyle := lipgloss.NewStyle()
 		if state.CurrentTurn == p.ID {
@@ -343,7 +348,7 @@ func renderPrompt(m model.Model, game model.GameAccessor, state *gameClient.Game
 		} else {
 			for _, p := range state.Players {
 				if p.ID == state.CurrentTurn {
-					fmt.Fprintf(&sb, "等待 %s 出牌...\n", p.Name)
+					fmt.Fprintf(&sb, "⏳ %s | 等待 %s 出牌...\n", timerView, p.Name)
 					break
 				}
 			}

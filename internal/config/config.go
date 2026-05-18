@@ -39,6 +39,17 @@ type Config struct {
 	Redis    RedisConfig    `yaml:"redis"`
 	Game     GameConfig     `yaml:"game"`
 	Security SecurityConfig `yaml:"security"`
+	AI       AIConfig       `yaml:"ai"`
+}
+
+// AIConfig AI 机器人配置
+type AIConfig struct {
+	Enabled        bool   `yaml:"enabled"`
+	BaseURL        string `yaml:"base_url"`
+	APIKey         string `yaml:"api_key"`
+	Model          string `yaml:"model"`
+	BotFillTimeout int    `yaml:"bot_fill_timeout"` // 等待玩家加入的超时秒数
+	MaxRetries     int    `yaml:"max_retries"`      // LLM 校验失败重试次数
 }
 
 // ServerConfig WebSocket 服务器配置
@@ -190,6 +201,16 @@ func loadFromEnv(cfg *Config) {
 	getEnvInt("GAME_SHUTDOWN_CHECK_INTERVAL", &cfg.Game.ShutdownCheckInterval)
 	getEnvInt("GAME_ROOM_CLEANUP_DELAY", &cfg.Game.RoomCleanupDelay)
 
+	// AI
+	if v := os.Getenv("AI_ENABLED"); v == "true" || v == "1" {
+		cfg.AI.Enabled = true
+	}
+	getEnvStr("AI_API_KEY", &cfg.AI.APIKey)
+	getEnvStr("AI_BASE_URL", &cfg.AI.BaseURL)
+	getEnvStr("AI_MODEL", &cfg.AI.Model)
+	getEnvInt("AI_BOT_FILL_TIMEOUT", &cfg.AI.BotFillTimeout)
+	getEnvInt("AI_MAX_RETRIES", &cfg.AI.MaxRetries)
+
 	// Security
 	getEnvStrSlice("SECURITY_ALLOWED_ORIGINS", &cfg.Security.AllowedOrigins)
 	getEnvInt("SECURITY_RATE_LIMIT_PER_SECOND", &cfg.Security.RateLimit.MaxPerSecond)
@@ -244,6 +265,12 @@ func setDefaults(cfg *Config) {
 	setDefaultInt(&cfg.Security.ChatLimit.MaxPerSecond, defaultChatLimitPerSecond)
 	setDefaultInt(&cfg.Security.ChatLimit.MaxPerMinute, defaultChatLimitPerMinute)
 	setDefaultInt(&cfg.Security.ChatLimit.Cooldown, defaultChatCooldown)
+
+	// AI
+	setDefaultStr(&cfg.AI.BaseURL, "https://api.deepseek.com")
+	setDefaultStr(&cfg.AI.Model, "deepseek-v4-flash")
+	setDefaultInt(&cfg.AI.BotFillTimeout, 30)
+	setDefaultInt(&cfg.AI.MaxRetries, 3)
 }
 
 // Default 返回默认配置

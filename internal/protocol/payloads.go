@@ -266,11 +266,12 @@ type ChatPayload struct {
 type PlayerInfo struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
-	Seat       int    `json:"seat"`        // 座位号 0-2
-	Ready      bool   `json:"ready"`       // 是否准备
-	IsLandlord bool   `json:"is_landlord"` // 是否是地主
-	CardsCount int    `json:"cards_count"` // 手牌数量
-	Online     bool   `json:"online"`      // 是否在线
+	Seat       int    `json:"seat"`             // 座位号 0-2
+	Ready      bool   `json:"ready"`            // 是否准备
+	IsLandlord bool   `json:"is_landlord"`      // 是否是地主
+	CardsCount int    `json:"cards_count"`      // 手牌数量
+	Online     bool   `json:"online"`           // 是否在线
+	IsBot      bool   `json:"is_bot,omitempty"` // 是否是 AI 机器人
 }
 
 // CardInfo 牌信息

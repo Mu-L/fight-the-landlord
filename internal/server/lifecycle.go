@@ -72,6 +72,7 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 	ticker := time.NewTicker(s.config.Game.ShutdownCheckIntervalDuration())
 	defer ticker.Stop()
 
+	lastActiveGames := 0
 	for time.Now().Before(deadline) {
 		activeGames := s.roomManager.GetActiveGamesCount()
 		if activeGames == 0 {
@@ -85,7 +86,12 @@ func (s *Server) GracefulShutdown(timeout time.Duration) {
 
 			break
 		}
-		log.Printf("⏳ 等待 %d 个房间结束...", activeGames)
+
+		if lastActiveGames != activeGames {
+			lastActiveGames = activeGames
+			log.Printf("⏳ 等待 %d 个房间结束...", activeGames)
+		}
+
 		<-ticker.C
 	}
 

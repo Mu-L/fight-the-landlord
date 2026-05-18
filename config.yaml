@@ -52,6 +52,20 @@ security:
     # 触发限流后的冷却时间（秒）
     cooldown: 5
 
+ai:
+  # 是否启用 AI 机器人（冷启动填充）
+  enabled: true
+  # DeepSeek API 地址（OpenAI 兼容）
+  base_url: "https://api.deepseek.com"
+  # API Key（也可通过 AI_API_KEY 环境变量设置）
+  api_key: ""
+  # 使用的模型
+  model: "deepseek-v4-flash"
+  # 玩家等待多少秒后由 AI 填充剩余座位
+  bot_fill_timeout: 5
+  # LLM 出牌校验失败后最多重试次数
+  max_retries: 3
+
 # 通知配置（可选）
 notification:
   # 小米音箱通知配置

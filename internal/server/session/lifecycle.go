@@ -120,6 +120,11 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 	landlordWins := winner.IsLandlord
 
 	for _, p := range gs.players {
+		rp := gs.room.Players[p.ID]
+		if rp != nil && rp.Client.IsBot() {
+			continue // AI 机器人不计入排行榜
+		}
+
 		isWinner := false
 		if landlordWins {
 			isWinner = p.IsLandlord
@@ -129,7 +134,6 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 
 		// 获取玩家名称
 		playerName := p.Name
-		rp := gs.room.Players[p.ID]
 		if rp != nil {
 			playerName = rp.Client.GetName()
 		}
