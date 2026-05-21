@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -231,6 +232,10 @@ func parseCardNotation(raw string, hand []card.Card) ([]card.Card, error) {
 			return nil, fmt.Errorf("手牌中%s不足(需要%d张)", rank, needed)
 		}
 	}
+
+	slices.SortFunc(result, func(a, b card.Card) int {
+		return int(a.Rank) - int(b.Rank)
+	})
 
 	return result, nil
 }

@@ -59,7 +59,7 @@ func buildPlayPrompt(gctx GameContext) string {
 		role = "地主"
 	}
 
-	fmt.Fprintf(&sb, "当前状态:\n角色:%s\n手牌(%d张):%s\n", role, len(gctx.Hand), cardsToStr(gctx.Hand))
+	fmt.Fprintf(&sb, "角色:%s\n手牌(%d张):%s\n", role, len(gctx.Hand), cardsToStr(gctx.Hand))
 
 	recentPlays := []struct {
 		label  string
@@ -83,7 +83,7 @@ func buildPlayPrompt(gctx GameContext) string {
 		fmt.Fprintf(&sb, "%s\n", strings.Join(parts, "，"))
 	}
 
-	fmt.Fprintf(&sb, "上家（%s）剩余：%d张，下家（%s）剩余：%d张\n",
+	fmt.Fprintf(&sb, "上家(%s)剩余:%d张，下家(%s)剩余:%d张\n",
 		playerRoleLabel(gctx.PlayerRoles[0]), gctx.PlayerCounts[0],
 		playerRoleLabel(gctx.PlayerRoles[1]), gctx.PlayerCounts[1])
 
@@ -102,7 +102,7 @@ func buildPlayPrompt(gctx GameContext) string {
 			remParts[i] = fmt.Sprintf("%s×%d", e.rank, e.count)
 		}
 		fmt.Fprintf(&sb, "底牌:%s\n", cardsToStr(gctx.BottomCards))
-		fmt.Fprintf(&sb, "记牌器（其他玩家各点数剩余张数）:%s\n", strings.Join(remParts, " "))
+		fmt.Fprintf(&sb, "记牌器(其他玩家各点数剩余张数):%s\n", strings.Join(remParts, " "))
 	}
 
 	var actionStr string

@@ -55,6 +55,8 @@ security:
 ai:
   # 是否启用 AI 机器人（冷启动填充）
   enabled: true
+  # LLM 调试日志
+  debug: false
   # DeepSeek API 地址（OpenAI 兼容）
   base_url: "https://api.deepseek.com"
   # API Key 出于安全不写在此文件，本地开发推荐 `.env.local`，Docker 推荐 `.env` 或 Docker secret
