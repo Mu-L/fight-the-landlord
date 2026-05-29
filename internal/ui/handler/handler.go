@@ -34,7 +34,7 @@ var messageHandlers = map[protocol.MessageType]messageHandler{
 	protocol.MsgGameStart:  handleMsgGameStart,
 	protocol.MsgDealCards:  handleMsgDealCards,
 	protocol.MsgBidTurn:    handleMsgBidTurn,
-	protocol.MsgBidResult:  func(_ model.Model, _ *protocol.Message) tea.Cmd { return nil },
+	protocol.MsgBidResult:  handleMsgBidResult,
 	protocol.MsgLandlord:   handleMsgLandlord,
 	protocol.MsgPlayTurn:   handleMsgPlayTurn,
 	protocol.MsgCardPlayed: handleMsgCardPlayed,

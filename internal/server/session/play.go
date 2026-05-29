@@ -54,6 +54,16 @@ func (gs *GameSession) HandlePlayCards(playerID string, cardInfos []protocol.Car
 	gs.lastPlayerIdx = gs.currentPlayer
 	gs.consecutivePasses = 0
 
+	// 累计倍数与出牌次数（用于结算）
+	if handToPlay.Type == rule.Bomb || handToPlay.Type == rule.Rocket {
+		gs.bombCount++ // 炸弹 / 王炸各翻一倍
+	}
+	if currentPlayer.IsLandlord {
+		gs.landlordPlays++
+	} else {
+		gs.farmerPlays++
+	}
+
 	// 从手牌中移除
 	currentPlayer.Hand = card.RemoveCards(currentPlayer.Hand, cards)
 

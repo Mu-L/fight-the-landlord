@@ -26,9 +26,15 @@ type GameState struct {
 	LastPlayed     []card.Card
 	LastHandType   string
 
+	// 叫抢地主 / 倍数
+	Multiplier int  // 当前倍数（叫抢阶段为底倍，出牌阶段含炸弹等累计）
+	IsGrabTurn bool // 当前叫地主轮是否处于抢地主阶段
+
 	// 游戏结果
 	Winner           string
 	WinnerIsLandlord bool
+	FinalMultiplier  int                    // 结算最终倍数
+	Scores           []protocol.PlayerScore // 各玩家本局得分
 
 	// 功能组件
 	CardCounter *CardCounter
@@ -60,7 +66,11 @@ func (gs *GameState) Reset() {
 	gs.LastPlayed = nil
 	gs.LastHandType = ""
 	gs.IsLandlord = false
+	gs.Multiplier = 0
+	gs.IsGrabTurn = false
 	gs.Winner = ""
 	gs.WinnerIsLandlord = false
+	gs.FinalMultiplier = 0
+	gs.Scores = nil
 	gs.CardCounter = NewCardCounter()
 }

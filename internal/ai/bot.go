@@ -372,6 +372,12 @@ func (b *AIBotClient) handleBidTurn(msg *protocol.Message) {
 		return
 	}
 
+	action := "叫地主"
+	if payload.IsGrab {
+		action = "抢地主"
+	}
+	log.Printf("🤖 %s 决定%s: %v（当前倍数 %d）", b.name, action, bid, payload.Multiplier)
+
 	if err := sess.HandleBid(b.id, bid); err != nil {
 		log.Printf("🤖 %s HandleBid 失败: %v", b.name, err)
 	}
