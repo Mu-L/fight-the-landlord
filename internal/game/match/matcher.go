@@ -25,7 +25,7 @@ type Matcher struct {
 	redisStore      *storage.RedisStore
 	leaderboard     *storage.LeaderboardManager
 	gameConfig      config.GameConfig
-	aiEngine        *ai.Engine
+	aiEngine        ai.DecisionEngine
 	aiCfg           config.AIConfig
 	registerSession SessionRegistrationFunc
 	queue           []types.ClientInterface
@@ -39,7 +39,7 @@ type MatcherDeps struct {
 	RedisStore      *storage.RedisStore
 	Leaderboard     *storage.LeaderboardManager
 	GameConfig      config.GameConfig
-	AIEngine        *ai.Engine
+	AIEngine        ai.DecisionEngine
 	AIConfig        config.AIConfig
 	RegisterSession SessionRegistrationFunc
 }

@@ -52,6 +52,10 @@ type AIConfig struct {
 	BotFillTimeout int    `yaml:"bot_fill_timeout"` // 等待玩家加入的超时秒数
 	MaxRetries     int    `yaml:"max_retries"`      // LLM 校验失败重试次数
 	Debug          bool   `yaml:"debug"`            // 打印完整的 LLM 请求与响应
+
+	// DouZero 引擎配置（优先级高于 LLM）
+	DouZeroEnabled bool   `yaml:"douzero_enabled"` // 使用 DouZero 代替 LLM
+	DouZeroURL     string `yaml:"douzero_url"`     // Python 服务地址
 }
 
 // ServerConfig WebSocket 服务器配置
@@ -243,6 +247,10 @@ func loadFromEnv(cfg *Config) {
 	if v := os.Getenv("AI_DEBUG"); v == "true" || v == "1" {
 		cfg.AI.Debug = true
 	}
+	if v := os.Getenv("AI_DOUZERO_ENABLED"); v == "true" || v == "1" {
+		cfg.AI.DouZeroEnabled = true
+	}
+	getEnvStr("AI_DOUZERO_URL", &cfg.AI.DouZeroURL)
 
 	// Security
 	getEnvStrSlice("SECURITY_ALLOWED_ORIGINS", &cfg.Security.AllowedOrigins)
@@ -304,6 +312,7 @@ func setDefaults(cfg *Config) {
 	setDefaultStr(&cfg.AI.Model, "deepseek-v4-flash")
 	setDefaultInt(&cfg.AI.BotFillTimeout, 30)
 	setDefaultInt(&cfg.AI.MaxRetries, 3)
+	setDefaultStr(&cfg.AI.DouZeroURL, "http://localhost:2021")
 }
 
 // Default 返回默认配置

@@ -19,3 +19,8 @@ bin/*
 /client
 /server
 /coverage.out
+
+# DouZero
+.venv/
+__pycache__/
+models/

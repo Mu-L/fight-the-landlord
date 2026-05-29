@@ -108,10 +108,19 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s.roomManager = room.NewRoomManager(s.redisStore, cfg.Game)
 
 	// 初始化 AI 引擎（AI 未启用时为 nil）
-	var aiEngine *ai.Engine
-	if cfg.AI.Enabled && cfg.AI.APIKey != "" {
-		aiEngine = ai.NewEngine(cfg.AI)
-		log.Printf("🤖 AI 机器人已启用（模型: %s，等待超时: %ds）", cfg.AI.Model, cfg.AI.BotFillTimeout)
+	var aiEngine ai.DecisionEngine
+	if cfg.AI.Enabled {
+		switch {
+		case cfg.AI.DouZeroEnabled:
+			aiEngine = ai.NewDouZeroEngine(cfg.AI.DouZeroURL)
+			log.Printf("🎮 DouZero 引擎已启用（服务地址: %s，等待超时: %ds）", cfg.AI.DouZeroURL, cfg.AI.BotFillTimeout)
+		case cfg.AI.APIKey != "":
+			aiEngine = ai.NewEngine(cfg.AI)
+			log.Printf("🤖 LLM 机器人已启用（模型: %s，等待超时: %ds）", cfg.AI.Model, cfg.AI.BotFillTimeout)
+		default:
+			log.Print("⚠️  AI 已启用但未配置 API Key 且未启用 DouZero，将使用规则出牌")
+			aiEngine = ai.NewEngine(cfg.AI) // 规则兜底
+		}
 	}
 
 	// 初始化匹配器

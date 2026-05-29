@@ -27,7 +27,7 @@ var botNames = []string{
 type AIBotClient struct {
 	id     string
 	name   string
-	engine *Engine
+	engine DecisionEngine
 
 	roomMu sync.RWMutex
 	room   string
@@ -54,10 +54,16 @@ type botState struct {
 	recentPlays   [2]PlayRecord // [0]=最近一次出牌, [1]=上上次出牌
 	prevBid       *bool         // 叫地主阶段上一个玩家的决策（nil=尚无）
 	cardCounter   *client.CardCounter
+
+	// DouZero 专用
+	douzeroPos  string         // "landlord"|"landlord_down"|"landlord_up"
+	playedByPos [3][]card.Rank // [0]=landlord,[1]=landlord_down,[2]=landlord_up 已出牌
+	actionSeq   [][]card.Rank  // 完整出牌序列，nil 元素 = pass
+	lastMovePos string         // 上次出牌的 DouZero 位置
 }
 
 // NewAIBotClient 创建 AI 机器人客户端
-func NewAIBotClient(engine *Engine) *AIBotClient {
+func NewAIBotClient(engine DecisionEngine) *AIBotClient {
 	name := fmt.Sprintf("🤖%s", botNames[rand.IntN(len(botNames))])
 	return &AIBotClient{
 		id:     uuid.New().String(),
@@ -123,6 +129,8 @@ func (b *AIBotClient) SendMessage(msg *protocol.Message) {
 		b.handleCardPlayed(msg)
 	case protocol.MsgBidTurn:
 		go b.handleBidTurn(msg)
+	case protocol.MsgPlayerPass:
+		b.handlePlayerPass(msg)
 	case protocol.MsgPlayTurn:
 		go b.handlePlayTurn(msg)
 	}
@@ -157,6 +165,10 @@ func (b *AIBotClient) handleGameStart(msg *protocol.Message) {
 	b.state.prevBid = nil
 	b.state.isLandlord = false
 	b.state.landlordID = ""
+	b.state.douzeroPos = ""
+	b.state.playedByPos = [3][]card.Rank{}
+	b.state.actionSeq = nil
+	b.state.lastMovePos = ""
 }
 
 func (b *AIBotClient) handleDealCards(msg *protocol.Message) {
@@ -206,6 +218,65 @@ func (b *AIBotClient) handleLandlord(msg *protocol.Message) {
 		b.state.cardCounts[payload.PlayerID] += 3
 	}
 	b.state.bottomCards = convert.InfosToCards(payload.BottomCards)
+
+	// 确定本机器人的 DouZero 位置
+	landlordSeat := -1
+	for seat, pid := range b.state.seatPlayerIDs {
+		if pid == payload.PlayerID {
+			landlordSeat = seat
+			break
+		}
+	}
+	if landlordSeat >= 0 {
+		b.state.douzeroPos = seatToDouZeroPos(b.state.seat, landlordSeat)
+	}
+}
+
+// playerIDToDouZeroPos 将 playerID 映射到 DouZero 位置（需持有 state.mu 锁）
+func (b *AIBotClient) playerIDToDouZeroPos(playerID string) string {
+	if b.state.landlordID == "" {
+		return ""
+	}
+	landlordSeat := -1
+	for seat, pid := range b.state.seatPlayerIDs {
+		if pid == b.state.landlordID {
+			landlordSeat = seat
+			break
+		}
+	}
+	if landlordSeat < 0 {
+		return ""
+	}
+	for seat, pid := range b.state.seatPlayerIDs {
+		if pid == playerID {
+			return seatToDouZeroPos(seat, landlordSeat)
+		}
+	}
+	return ""
+}
+
+// seatToDouZeroPos 根据座位号计算 DouZero 位置名称
+func seatToDouZeroPos(seat, landlordSeat int) string {
+	switch seat {
+	case landlordSeat:
+		return DouZeroPosLandlord
+	case (landlordSeat + 1) % 3:
+		return DouZeroPosLandlordDn
+	default:
+		return DouZeroPosLandlordUp
+	}
+}
+
+// douzeroPosIdx 返回 DouZero 位置对应的 playedByPos 下标
+func douzeroPosIdx(pos string) int {
+	switch pos {
+	case DouZeroPosLandlord:
+		return 0
+	case DouZeroPosLandlordDn:
+		return 1
+	default:
+		return 2
+	}
 }
 
 func (b *AIBotClient) handleCardPlayed(msg *protocol.Message) {
@@ -239,6 +310,36 @@ func (b *AIBotClient) handleCardPlayed(msg *protocol.Message) {
 			PlayerName: payload.PlayerName,
 			IsLandlord: payload.PlayerID == b.state.landlordID,
 		}
+	}
+
+	// 更新 DouZero 出牌历史
+	if b.state.landlordID != "" {
+		playerPos := b.playerIDToDouZeroPos(payload.PlayerID)
+		if playerPos != "" {
+			ranks := make([]card.Rank, len(played))
+			for i, c := range played {
+				ranks[i] = c.Rank
+			}
+			idx := douzeroPosIdx(playerPos)
+			b.state.playedByPos[idx] = append(b.state.playedByPos[idx], ranks...)
+			b.state.actionSeq = append(b.state.actionSeq, ranks)
+			b.state.lastMovePos = playerPos
+		}
+	}
+}
+
+func (b *AIBotClient) handlePlayerPass(msg *protocol.Message) {
+	payload, err := codec.ParsePayload[protocol.PlayerPassPayload](msg)
+	if err != nil {
+		log.Printf("🤖 handlePlayerPass decode error: %v", err)
+		return
+	}
+
+	b.state.mu.Lock()
+	defer b.state.mu.Unlock()
+	// pass 记入序列（nil 表示不出）
+	if b.state.landlordID != "" && b.playerIDToDouZeroPos(payload.PlayerID) != "" {
+		b.state.actionSeq = append(b.state.actionSeq, nil)
 	}
 }
 
@@ -315,7 +416,7 @@ func (b *AIBotClient) handlePlayTurn(msg *protocol.Message) {
 	}
 }
 
-// buildGameContext 构建 LLM 决策上下文（调用时需持有 state.mu.RLock）
+// buildGameContext 构建决策引擎上下文（调用时需持有 state.mu.RLock）
 func (b *AIBotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
 	hand := make([]card.Card, len(b.state.hand))
 	copy(hand, b.state.hand)
@@ -328,6 +429,16 @@ func (b *AIBotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
 		roles[0], roles[1] = pid0 == b.state.landlordID, pid1 == b.state.landlordID
 	}
 
+	// 复制 DouZero 出牌历史
+	actionSeq := make([][]card.Rank, len(b.state.actionSeq))
+	copy(actionSeq, b.state.actionSeq)
+
+	playedByPos := [3][]card.Rank{
+		append([]card.Rank(nil), b.state.playedByPos[0]...),
+		append([]card.Rank(nil), b.state.playedByPos[1]...),
+		append([]card.Rank(nil), b.state.playedByPos[2]...),
+	}
+
 	return GameContext{
 		IsLandlord:     b.state.isLandlord,
 		Hand:           hand,
@@ -338,7 +449,38 @@ func (b *AIBotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
 		PlayerCounts:   counts,
 		PlayerRoles:    roles,
 		RemainingCards: b.state.cardCounter.GetRemaining(),
+		DouZeroPos:     b.state.douzeroPos,
+		ActionSeq:      actionSeq,
+		PlayedByPos:    playedByPos,
+		LastMovePos:    b.state.lastMovePos,
+		NumCardsLeft:   b.buildNumCardsLeft(),
 	}
+}
+
+// buildNumCardsLeft 构建 DouZero 位置 → 剩余牌数的映射（调用时需持有 state.mu.RLock）
+func (b *AIBotClient) buildNumCardsLeft() map[string]int {
+	m := make(map[string]int)
+	if b.state.landlordID == "" {
+		return m
+	}
+	landlordSeat := -1
+	for seat, pid := range b.state.seatPlayerIDs {
+		if pid == b.state.landlordID {
+			landlordSeat = seat
+			break
+		}
+	}
+	if landlordSeat < 0 {
+		return m
+	}
+	for seat, pid := range b.state.seatPlayerIDs {
+		if pid == "" {
+			continue
+		}
+		pos := seatToDouZeroPos(seat, landlordSeat)
+		m[pos] = b.state.cardCounts[pid]
+	}
+	return m
 }
 
 // thinkDelay 模拟思考时间（300–900ms）
