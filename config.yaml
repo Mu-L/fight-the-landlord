@@ -55,10 +55,10 @@ security:
     # 触发限流后的冷却时间（秒）
     cooldown: 5
 
-ai:
-  # 是否启用 AI 机器人（冷启动填充）
+bot:
+  # 是否启用机器人（冷启动填充）
   enabled: true
-  # 玩家等待多少秒后由 AI 填充剩余座位
+  # 玩家等待多少秒后由填充剩余座位
   bot_fill_timeout: 15
 
   # --- DouZero 引擎 ---

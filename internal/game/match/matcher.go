@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/palemoky/fight-the-landlord/internal/ai"
+	"github.com/palemoky/fight-the-landlord/internal/bot"
 	"github.com/palemoky/fight-the-landlord/internal/config"
 	"github.com/palemoky/fight-the-landlord/internal/game/room"
 	"github.com/palemoky/fight-the-landlord/internal/protocol"
@@ -25,8 +25,8 @@ type Matcher struct {
 	redisStore      *storage.RedisStore
 	leaderboard     *storage.LeaderboardManager
 	gameConfig      config.GameConfig
-	aiEngine        ai.DecisionEngine
-	aiCfg           config.AIConfig
+	botEngine       bot.DecisionEngine
+	botCfg          config.BotConfig
 	registerSession SessionRegistrationFunc
 	queue           []types.ClientInterface
 	botFillTimer    *time.Timer
@@ -39,8 +39,8 @@ type MatcherDeps struct {
 	RedisStore      *storage.RedisStore
 	Leaderboard     *storage.LeaderboardManager
 	GameConfig      config.GameConfig
-	AIEngine        ai.DecisionEngine
-	AIConfig        config.AIConfig
+	BotEngine       bot.DecisionEngine
+	BotConfig       config.BotConfig
 	RegisterSession SessionRegistrationFunc
 }
 
@@ -51,8 +51,8 @@ func NewMatcher(deps MatcherDeps) *Matcher {
 		redisStore:      deps.RedisStore,
 		leaderboard:     deps.Leaderboard,
 		gameConfig:      deps.GameConfig,
-		aiEngine:        deps.AIEngine,
-		aiCfg:           deps.AIConfig,
+		botEngine:       deps.BotEngine,
+		botCfg:          deps.BotConfig,
 		registerSession: deps.RegisterSession,
 		queue:           make([]types.ClientInterface, 0),
 	}
@@ -77,7 +77,7 @@ func (m *Matcher) AddToQueue(client types.ClientInterface) {
 	case len(m.queue) >= 3:
 		m.cancelBotFillTimer()
 		m.tryMatch()
-	case m.aiCfg.Enabled && m.aiEngine != nil && m.botFillTimer == nil:
+	case m.botCfg.Enabled && m.botEngine != nil && m.botFillTimer == nil:
 		m.startBotFillTimer()
 	default:
 		m.tryMatch()
@@ -102,8 +102,8 @@ func (m *Matcher) RemoveFromQueue(client types.ClientInterface) {
 }
 
 func (m *Matcher) startBotFillTimer() {
-	timeout := time.Duration(m.aiCfg.BotFillTimeout) * time.Second
-	log.Printf("🤖 等待玩家加入（%ds 后由 AI 填充剩余座位）", m.aiCfg.BotFillTimeout)
+	timeout := time.Duration(m.botCfg.BotFillTimeout) * time.Second
+	log.Printf("🤖 等待玩家加入（%ds 后由 Bot 填充剩余座位）", m.botCfg.BotFillTimeout)
 	m.botFillTimer = time.AfterFunc(timeout, func() {
 		m.mu.Lock()
 		defer m.mu.Unlock()
@@ -112,9 +112,9 @@ func (m *Matcher) startBotFillTimer() {
 			return
 		}
 		for len(m.queue) < 3 {
-			bot := ai.NewAIBotClient(m.aiEngine)
+			bot := bot.NewBotClient(m.botEngine)
 			m.queue = append(m.queue, bot)
-			log.Printf("🤖 AI 机器人 %s 加入匹配队列", bot.GetName())
+			log.Printf("🤖 Bot %s 加入匹配队列", bot.GetName())
 		}
 		m.tryMatch()
 	})
@@ -196,9 +196,9 @@ func (m *Matcher) createMatchRoom(players []types.ClientInterface) {
 	// 创建游戏会话并开始
 	gs := session.NewGameSession(room, m.leaderboard, m.gameConfig)
 
-	// 将 session 注入 AI 机器人（AIBotClient 通过 SessionInterface 回调出牌）
+	// 将 session 注入机器人（BotClient 通过 SessionInterface 回调出牌）
 	for _, client := range players {
-		if bot, ok := client.(*ai.AIBotClient); ok {
+		if bot, ok := client.(*bot.BotClient); ok {
 			bot.SetSession(gs)
 		}
 	}

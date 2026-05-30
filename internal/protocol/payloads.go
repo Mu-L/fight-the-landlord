@@ -286,7 +286,7 @@ type PlayerInfo struct {
 	IsLandlord bool   `json:"is_landlord"`      // 是否是地主
 	CardsCount int    `json:"cards_count"`      // 手牌数量
 	Online     bool   `json:"online"`           // 是否在线
-	IsBot      bool   `json:"is_bot,omitempty"` // 是否是 AI 机器人
+	IsBot      bool   `json:"is_bot,omitempty"` // 是否是机器人
 }
 
 // CardInfo 牌信息

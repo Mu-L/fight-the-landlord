@@ -1,4 +1,4 @@
-package ai
+package bot
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type DecisionEngine interface {
 	DecidePlay(ctx context.Context, botName string, gctx GameContext) []card.Card
 }
 
-// SessionInterface 避免 session↔ai 循环依赖
+// SessionInterface 避免 session↔bot 循环依赖
 type SessionInterface interface {
 	HandleBid(playerID string, bid bool) error
 	HandlePlayCards(playerID string, cardInfos []protocol.CardInfo) error

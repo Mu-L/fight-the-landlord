@@ -1,4 +1,4 @@
-package ai
+package bot
 
 import (
 	"context"
@@ -23,8 +23,8 @@ var botNames = []string{
 	"出奇制胜", "胸有成竹", "稳操胜券", "势如破竹", "百战百胜",
 }
 
-// AIBotClient 实现 types.ClientInterface 的 AI 机器人
-type AIBotClient struct {
+// BotClient 实现 types.ClientInterface 的机器人
+type BotClient struct {
 	id     string
 	name   string
 	engine DecisionEngine
@@ -62,10 +62,10 @@ type botState struct {
 	lastMovePos string         // 上次出牌的 DouZero 位置
 }
 
-// NewAIBotClient 创建 AI 机器人客户端
-func NewAIBotClient(engine DecisionEngine) *AIBotClient {
+// NewBotClient 创建机器人客户端
+func NewBotClient(engine DecisionEngine) *BotClient {
 	name := fmt.Sprintf("🤖%s", botNames[rand.IntN(len(botNames))])
-	return &AIBotClient{
+	return &BotClient{
 		id:     uuid.New().String(),
 		name:   name,
 		engine: engine,
@@ -77,7 +77,7 @@ func NewAIBotClient(engine DecisionEngine) *AIBotClient {
 }
 
 // SetSession 在 GameSession 创建后注入（由 matcher 调用）
-func (b *AIBotClient) SetSession(s SessionInterface) {
+func (b *BotClient) SetSession(s SessionInterface) {
 	b.sessionMu.Lock()
 	defer b.sessionMu.Unlock()
 	b.session = s
@@ -85,30 +85,30 @@ func (b *AIBotClient) SetSession(s SessionInterface) {
 
 // --- types.ClientInterface 实现 ---
 
-func (b *AIBotClient) GetID() string   { return b.id }
-func (b *AIBotClient) GetName() string { return b.name }
+func (b *BotClient) GetID() string   { return b.id }
+func (b *BotClient) GetName() string { return b.name }
 
-func (b *AIBotClient) GetRoom() string {
+func (b *BotClient) GetRoom() string {
 	b.roomMu.RLock()
 	defer b.roomMu.RUnlock()
 	return b.room
 }
 
-func (b *AIBotClient) SetRoom(code string) {
+func (b *BotClient) SetRoom(code string) {
 	b.roomMu.Lock()
 	defer b.roomMu.Unlock()
 	b.room = code
 }
 
-func (b *AIBotClient) Close() {
+func (b *BotClient) Close() {
 	b.closedMu.Lock()
 	defer b.closedMu.Unlock()
 	b.closed = true
 }
 
-func (b *AIBotClient) IsBot() bool { return true }
+func (b *BotClient) IsBot() bool { return true }
 
-func (b *AIBotClient) SendMessage(msg *protocol.Message) {
+func (b *BotClient) SendMessage(msg *protocol.Message) {
 	b.closedMu.RLock()
 	closed := b.closed
 	b.closedMu.RUnlock()
@@ -138,7 +138,7 @@ func (b *AIBotClient) SendMessage(msg *protocol.Message) {
 
 // --- 消息处理 ---
 
-func (b *AIBotClient) handleGameStart(msg *protocol.Message) {
+func (b *BotClient) handleGameStart(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.GameStartPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleGameStart decode error: %v", err)
@@ -171,7 +171,7 @@ func (b *AIBotClient) handleGameStart(msg *protocol.Message) {
 	b.state.lastMovePos = ""
 }
 
-func (b *AIBotClient) handleDealCards(msg *protocol.Message) {
+func (b *BotClient) handleDealCards(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.DealCardsPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleDealCards decode error: %v", err)
@@ -184,7 +184,7 @@ func (b *AIBotClient) handleDealCards(msg *protocol.Message) {
 	log.Printf("🤖 %s 收到手牌 %d 张", b.name, len(b.state.hand))
 }
 
-func (b *AIBotClient) handleBidResult(msg *protocol.Message) {
+func (b *BotClient) handleBidResult(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.BidResultPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleBidResult decode error: %v", err)
@@ -199,7 +199,7 @@ func (b *AIBotClient) handleBidResult(msg *protocol.Message) {
 	b.state.prevBid = &bid
 }
 
-func (b *AIBotClient) handleLandlord(msg *protocol.Message) {
+func (b *BotClient) handleLandlord(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.LandlordPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleLandlord decode error: %v", err)
@@ -233,7 +233,7 @@ func (b *AIBotClient) handleLandlord(msg *protocol.Message) {
 }
 
 // playerIDToDouZeroPos 将 playerID 映射到 DouZero 位置（需持有 state.mu 锁）
-func (b *AIBotClient) playerIDToDouZeroPos(playerID string) string {
+func (b *BotClient) playerIDToDouZeroPos(playerID string) string {
 	if b.state.landlordID == "" {
 		return ""
 	}
@@ -279,7 +279,7 @@ func douzeroPosIdx(pos string) int {
 	}
 }
 
-func (b *AIBotClient) handleCardPlayed(msg *protocol.Message) {
+func (b *BotClient) handleCardPlayed(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.CardPlayedPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleCardPlayed decode error: %v", err)
@@ -328,7 +328,7 @@ func (b *AIBotClient) handleCardPlayed(msg *protocol.Message) {
 	}
 }
 
-func (b *AIBotClient) handlePlayerPass(msg *protocol.Message) {
+func (b *BotClient) handlePlayerPass(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.PlayerPassPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handlePlayerPass decode error: %v", err)
@@ -343,7 +343,7 @@ func (b *AIBotClient) handlePlayerPass(msg *protocol.Message) {
 	}
 }
 
-func (b *AIBotClient) handleBidTurn(msg *protocol.Message) {
+func (b *BotClient) handleBidTurn(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.BidTurnPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handleBidTurn decode error: %v", err)
@@ -383,7 +383,7 @@ func (b *AIBotClient) handleBidTurn(msg *protocol.Message) {
 	}
 }
 
-func (b *AIBotClient) handlePlayTurn(msg *protocol.Message) {
+func (b *BotClient) handlePlayTurn(msg *protocol.Message) {
 	payload, err := codec.ParsePayload[protocol.PlayTurnPayload](msg)
 	if err != nil {
 		log.Printf("🤖 handlePlayTurn decode error: %v", err)
@@ -423,7 +423,7 @@ func (b *AIBotClient) handlePlayTurn(msg *protocol.Message) {
 }
 
 // buildGameContext 构建决策引擎上下文（调用时需持有 state.mu.RLock）
-func (b *AIBotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
+func (b *BotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
 	hand := make([]card.Card, len(b.state.hand))
 	copy(hand, b.state.hand)
 
@@ -464,7 +464,7 @@ func (b *AIBotClient) buildGameContext(mustPlay, canBeat bool) GameContext {
 }
 
 // buildNumCardsLeft 构建 DouZero 位置 → 剩余牌数的映射（调用时需持有 state.mu.RLock）
-func (b *AIBotClient) buildNumCardsLeft() map[string]int {
+func (b *BotClient) buildNumCardsLeft() map[string]int {
 	m := make(map[string]int)
 	if b.state.landlordID == "" {
 		return m

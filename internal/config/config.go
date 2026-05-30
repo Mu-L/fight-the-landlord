@@ -40,11 +40,11 @@ type Config struct {
 	Redis    RedisConfig    `yaml:"redis"`
 	Game     GameConfig     `yaml:"game"`
 	Security SecurityConfig `yaml:"security"`
-	AI       AIConfig       `yaml:"ai"`
+	BOT      BotConfig      `yaml:"bot"`
 }
 
-// AIConfig AI 机器人配置
-type AIConfig struct {
+// BotConfig 机器人配置
+type BotConfig struct {
 	Enabled        bool `yaml:"enabled"`
 	BotFillTimeout int  `yaml:"bot_fill_timeout"` // 等待玩家加入的超时秒数
 
@@ -212,15 +212,15 @@ func loadFromEnv(cfg *Config) {
 	getEnvInt("GAME_SHUTDOWN_CHECK_INTERVAL", &cfg.Game.ShutdownCheckInterval)
 	getEnvInt("GAME_ROOM_CLEANUP_DELAY", &cfg.Game.RoomCleanupDelay)
 
-	// AI
-	if v := os.Getenv("AI_ENABLED"); v == "true" || v == "1" {
-		cfg.AI.Enabled = true
+	// BOT
+	if v := os.Getenv("BOT_ENABLED"); v == "true" || v == "1" {
+		cfg.BOT.Enabled = true
 	}
-	getEnvInt("AI_BOT_FILL_TIMEOUT", &cfg.AI.BotFillTimeout)
-	if v := os.Getenv("AI_DOUZERO_ENABLED"); v == "true" || v == "1" {
-		cfg.AI.DouZeroEnabled = true
+	getEnvInt("BOT_FILL_TIMEOUT", &cfg.BOT.BotFillTimeout)
+	if v := os.Getenv("DOUZERO_ENABLED"); v == "true" || v == "1" {
+		cfg.BOT.DouZeroEnabled = true
 	}
-	getEnvStr("AI_DOUZERO_URL", &cfg.AI.DouZeroURL)
+	getEnvStr("DOUZERO_URL", &cfg.BOT.DouZeroURL)
 
 	// Security
 	getEnvStrSlice("SECURITY_ALLOWED_ORIGINS", &cfg.Security.AllowedOrigins)
@@ -277,9 +277,9 @@ func setDefaults(cfg *Config) {
 	setDefaultInt(&cfg.Security.ChatLimit.MaxPerMinute, defaultChatLimitPerMinute)
 	setDefaultInt(&cfg.Security.ChatLimit.Cooldown, defaultChatCooldown)
 
-	// AI
-	setDefaultInt(&cfg.AI.BotFillTimeout, 30)
-	setDefaultStr(&cfg.AI.DouZeroURL, "http://localhost:2021")
+	// Bot
+	setDefaultInt(&cfg.BOT.BotFillTimeout, 30)
+	setDefaultStr(&cfg.BOT.DouZeroURL, "http://localhost:2021")
 }
 
 // Default 返回默认配置

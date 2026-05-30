@@ -65,7 +65,7 @@ func WaitingView(m model.Model) string {
 		if p.ID == m.PlayerID() {
 			meStr = " (你)"
 		} else if p.IsBot {
-			meStr = " (AI)"
+			meStr = " (Bot)"
 		}
 		fmt.Fprintf(&playerList, "  %s %s%s\n", readyStr, p.Name, meStr)
 	}

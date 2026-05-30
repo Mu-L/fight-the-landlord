@@ -222,7 +222,7 @@ func (gs *GameSession) recordGameResults(winner *GamePlayer) {
 	for _, p := range gs.players {
 		rp := gs.room.Players[p.ID]
 		if rp != nil && rp.Client.IsBot() {
-			continue // AI 机器人不计入排行榜
+			continue // Bot 不计入排行榜
 		}
 
 		isWinner := false

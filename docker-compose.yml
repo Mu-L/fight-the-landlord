@@ -9,7 +9,7 @@ services:
     env_file: .env
     environment:
       - TZ=Asia/Shanghai
-      - AI_DOUZERO_URL=http://douzero:2021
+      - DOUZERO_URL=http://douzero:2021
     ports:
       - "${SERVER_PORT:-1780}:1780"
     depends_on:
@@ -20,7 +20,7 @@ services:
     networks:
       - poker-network
 
-  # DouZero AI 推理服务
+  # DouZero 推理服务
   douzero:
     image: palemoky/fight-the-landlord-douzero:latest
     container_name: poker-douzero
