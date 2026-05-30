@@ -3,8 +3,10 @@
 package sound
 
 import (
+	"embed"
 	"fmt"
-	"os"
+	"io/fs"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -15,6 +17,13 @@ import (
 	"github.com/gopxl/beep/v2/speaker"
 	"github.com/gopxl/beep/v2/wav"
 )
+
+// soundFS 把音效文件编译进二进制，让客户端二进制自包含、可独立分发。
+// 仅嵌入顶层 mp3（即实际播放的英文命名音效）；sounds/women 下的中文女声
+// 为备用语音，暂未启用，故不嵌入以免无谓增大二进制。
+//
+//go:embed sounds/*.mp3
+var soundFS embed.FS
 
 type SoundManager struct {
 	buffers map[string]*beep.Buffer
@@ -44,7 +53,7 @@ func (sm *SoundManager) Init() error {
 	}
 	sm.enabled = true
 
-	// Load sounds from assets directory
+	// Load sounds from the embedded filesystem
 	if err := sm.loadSoundFiles(sampleRate); err != nil {
 		return err
 	}
@@ -52,17 +61,13 @@ func (sm *SoundManager) Init() error {
 	return nil
 }
 
-// loadSoundFiles loads every sound file from the assets/sounds directory,
-// keyed by its filename without extension (e.g. deal.mp3 -> "deal").
+// loadSoundFiles loads every embedded sound file, keyed by its filename
+// without extension (e.g. deal.mp3 -> "deal").
 func (sm *SoundManager) loadSoundFiles(sampleRate beep.SampleRate) error {
-	soundDir := "assets/sounds"
-	files, err := os.ReadDir(soundDir)
+	const soundDir = "sounds"
+	files, err := fs.ReadDir(soundFS, soundDir)
 	if err != nil {
-		// It's okay if the directory doesn't exist, just no sounds.
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to read sound directory: %w", err)
+		return fmt.Errorf("failed to read embedded sound directory: %w", err)
 	}
 
 	for _, file := range files {
@@ -86,8 +91,7 @@ func (sm *SoundManager) loadSoundFile(soundDir, rel, key string, sampleRate beep
 		return nil
 	}
 
-	path := filepath.Join(soundDir, rel)
-	f, err := os.Open(filepath.Clean(path))
+	f, err := soundFS.Open(path.Join(soundDir, rel))
 	if err != nil {
 		return err
 	}

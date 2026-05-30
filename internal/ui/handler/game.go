@@ -318,7 +318,7 @@ func handleMsgGameOver(m model.Model, msg *protocol.Message) tea.Cmd {
 }
 
 // playCardVoice 用男声播报刚打出的牌：单/对/三张报点数，其余报牌型。
-// 文件名与 assets/sounds 下的英文命名一一对应。
+// 文件名与 internal/sound/sounds 下的英文命名一一对应。
 func playCardVoice(m model.Model, handType string, cards []card.Card) {
 	switch handType {
 	case rule.Single.String():
@@ -348,7 +348,7 @@ func playCardVoice(m model.Model, handType string, cards []card.Card) {
 	}
 }
 
-// rankToken 返回报牌语音文件名中的点数部分（与 assets 文件名一致）。
+// rankToken 返回报牌语音文件名中的点数部分（与 sounds 文件名一致）。
 func rankToken(cards []card.Card) string {
 	switch modeRank(cards) {
 	case card.RankBlackJoker:
