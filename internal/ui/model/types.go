@@ -128,7 +128,9 @@ type Model interface {
 
 	// Sound
 	PlaySound(name string)
+	PlaySequence(names ...string)
 	PlayBGM(name string)
+	PlayBGMAnyOf(names ...string)
 	StopBGM()
 	ToggleMute() bool
 	Muted() bool

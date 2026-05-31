@@ -198,8 +198,8 @@ func (m *OnlineModel) EnterLobby() {
 	m.phase = PhaseLobby
 	m.error = ""
 
-	// 大厅保持安静，停止对局背景音乐
-	m.soundManager.StopBGM()
+	// 大厅播放欢迎背景音乐（循环），覆盖上一局的对局 BGM
+	m.soundManager.PlayBGM("bgm_welcome")
 	m.input.Reset()
 	m.input.Placeholder = "输入选项 (1-6) 或房间号"
 	m.input.Focus()
@@ -215,7 +215,9 @@ func (m *OnlineModel) SetMaintenanceMode(mode bool)     { m.maintenanceMode = mo
 func (m *OnlineModel) MatchingStartTime() time.Time     { return m.matchingStartTime }
 func (m *OnlineModel) SetMatchingStartTime(t time.Time) { m.matchingStartTime = t }
 func (m *OnlineModel) PlaySound(name string)            { m.soundManager.Play(name) }
+func (m *OnlineModel) PlaySequence(names ...string)     { m.soundManager.PlaySequence(names...) }
 func (m *OnlineModel) PlayBGM(name string)              { m.soundManager.PlayBGM(name) }
+func (m *OnlineModel) PlayBGMAnyOf(names ...string)     { m.soundManager.PlayBGMAnyOf(names...) }
 func (m *OnlineModel) StopBGM()                         { m.soundManager.StopBGM() }
 func (m *OnlineModel) ToggleMute() bool                 { return m.soundManager.ToggleMute() }
 func (m *OnlineModel) Muted() bool                      { return m.soundManager.Muted() }

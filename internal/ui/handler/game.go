@@ -159,7 +159,7 @@ func handleMsgBidResult(m model.Model, msg *protocol.Message) tea.Cmd {
 		m.PlaySound("bid_nocall") // 不叫
 	case payload.IsGrab && payload.Bid:
 		// 抢地主有两个音效，随机播一个增加变化
-		m.PlaySound(randVoice("bid_grab", "bid_grab2"))
+		m.PlaySound(randVoice("bid_grab", "bid_grab2", "bid_grab3"))
 	case payload.IsGrab && !payload.Bid:
 		m.PlaySound("bid_nograb") // 不抢
 	}
@@ -287,7 +287,8 @@ func handleMsgCardPlayed(m model.Model, msg *protocol.Message) tea.Cmd {
 		}
 	}
 	if warning {
-		m.PlayBGM("bgm_warning")
+		// 紧张版 BGM 在两首之间随机选一首；已在播其中一首时保持不变，避免反复切歌
+		m.PlayBGMAnyOf("bgm_warning", "bgm_warning2")
 	} else {
 		m.PlayBGM("bgm_normal")
 	}
@@ -332,19 +333,19 @@ func playCardVoice(m model.Model, handType string, cards []card.Card) {
 	case rule.TrioWithPair.String():
 		m.PlaySound("type_trio_pair")
 	case rule.Straight.String():
-		m.PlaySound("type_straight")
+		m.PlaySequence("type_straight", "straight")
 	case rule.PairStraight.String():
 		m.PlaySound("type_pairstraight")
 	case rule.Plane.String(), rule.PlaneWithSingles.String(), rule.PlaneWithPairs.String():
-		m.PlaySound("type_plane")
+		m.PlaySequence("type_plane", "plane")
 	case rule.Bomb.String():
-		m.PlaySound("type_bomb")
+		m.PlaySequence("type_bomb", "bomb")
 	case rule.FourWithTwo.String():
 		m.PlaySound("type_four_two")
 	case rule.FourWithTwoPairs.String():
 		m.PlaySound("type_four_twopair")
 	case rule.Rocket.String():
-		m.PlaySound("type_rocket")
+		m.PlaySequence("type_rocket", "bomb")
 	}
 }
 

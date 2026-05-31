@@ -6,7 +6,9 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"math/rand/v2"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -18,11 +20,11 @@ import (
 )
 
 // soundFS 把音效文件编译进二进制，让客户端二进制自包含、可独立分发。
-// 仅嵌入当前启用的音效：lobby（大厅/BGM）、gaming/effects（非人声音效）、
-// gaming/voices/male（男声播报）。gaming/voices/female 为备用女声，暂未启用，
-// 故不嵌入以免无谓增大二进制。
+// 仅嵌入当前启用的音效：lobby（大厅欢迎曲与菜单音效）、gaming/bgm（对局循环
+// 背景音乐）、gaming/effects（一次性非人声音效）、gaming/voices/male（男声播报）。
+// gaming/voices/female 为备用女声，暂未启用，故不嵌入以免无谓增大二进制。
 //
-//go:embed lobby gaming/effects gaming/voices/male
+//go:embed lobby gaming/bgm gaming/effects gaming/voices/male
 var soundFS embed.FS
 
 type SoundManager struct {
@@ -152,6 +154,36 @@ func (sm *SoundManager) Play(name string) {
 	speaker.Play(buffer.Streamer(0, buffer.Len()))
 }
 
+// PlaySequence plays the named sounds back-to-back: each one starts only after
+// the previous finishes. Use it to prefix a voice announcement with an effect
+// (e.g. the plane whoosh before "飞机"). Missing sounds are skipped, so a
+// sequence still plays whatever is loaded.
+func (sm *SoundManager) PlaySequence(names ...string) {
+	if !sm.enabled {
+		return
+	}
+	sm.bgmMu.Lock()
+	muted := sm.muted
+	sm.bgmMu.Unlock()
+	if muted {
+		return
+	}
+
+	streamers := make([]beep.Streamer, 0, len(names))
+	for _, name := range names {
+		buffer, ok := sm.buffers[name]
+		if !ok {
+			continue
+		}
+		streamers = append(streamers, buffer.Streamer(0, buffer.Len()))
+	}
+	if len(streamers) == 0 {
+		return
+	}
+
+	speaker.Play(beep.Seq(streamers...))
+}
+
 // PlayBGM switches the looping background track to the given sound. It is a
 // no-op if that track is already playing or the sound isn't loaded. The track
 // keeps looping and respects the current mute state (paused while muted).
@@ -186,6 +218,26 @@ func (sm *SoundManager) PlayBGM(name string) {
 	sm.bgmCtrl.Streamer = looped
 	sm.bgmCtrl.Paused = sm.muted
 	speaker.Unlock()
+}
+
+// PlayBGMAnyOf keeps a looping BGM playing from a set of interchangeable
+// tracks: if one of them is already playing it leaves it untouched, otherwise
+// it randomly picks one and switches to it. This prevents the tracks from
+// flip-flopping (and restarting) when the caller fires repeatedly while the
+// same state holds — e.g. the tense warning music during the endgame.
+func (sm *SoundManager) PlayBGMAnyOf(names ...string) {
+	if len(names) == 0 {
+		return
+	}
+	sm.bgmMu.Lock()
+	playing := slices.Contains(names, sm.bgmName)
+	sm.bgmMu.Unlock()
+	if playing {
+		return
+	}
+	// BGM track changes only happen on the single UI goroutine, so bgmName
+	// won't change between the check above and this call.
+	sm.PlayBGM(names[rand.IntN(len(names))])
 }
 
 // StopBGM stops the background music and drops it from the mixer, so a later
