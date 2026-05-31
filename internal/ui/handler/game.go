@@ -275,8 +275,19 @@ func playCardPlayedSounds(m model.Model, payload protocol.CardPlayedPayload, isB
 	m.PlaySound("play")
 	switch {
 	case isBeat && payload.HandType != rule.Bomb.String() && payload.HandType != rule.Rocket.String():
-		// 普通接牌压过上家：随机播一个“压死”男声
-		m.PlaySound(randVoice("beat", "beat_bigger", "beat_cover"))
+		// 普通接牌压过上家：优先报牌型（单/对/三张报点数），其间穿插“压死”男声
+		switch payload.HandType {
+		case rule.Single.String(), rule.Pair.String(), rule.Trio.String():
+			// 2/3 概率报点数，1/3 概率播“压死”，让两种语音交替出现而非单调
+			if rand.IntN(3) == 0 {
+				m.PlaySound(randVoice("beat", "beat_bigger", "beat_cover"))
+			} else {
+				playCardVoice(m, payload.HandType, m.Game().State().LastPlayed)
+			}
+		default:
+			// 其余牌型没有专门的报点数语音，仍用“压死”男声
+			m.PlaySound(randVoice("beat", "beat_bigger", "beat_cover"))
+		}
 	default:
 		// 首出 / 新一轮领出，或用炸弹、王炸压死：男声报牌（牌型 + 点数）
 		playCardVoice(m, payload.HandType, m.Game().State().LastPlayed)
