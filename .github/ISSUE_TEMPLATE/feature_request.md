@@ -1,20 +1,20 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+name: 功能建议
+about: 为斗地主提出新想法或改进建议
+title: '[FEATURE] '
+labels: enhancement
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**功能背景**
+描述这个功能想解决什么问题，或满足什么需求。例如：当前 [...] 不够方便，因为 [...]
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**期望的功能**
+清晰描述你希望实现什么功能。
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**备选方案**
+你是否考虑过其他实现方式？如有，请简要描述。
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**补充信息**
+任何有助于理解该功能的截图、参考资料或其他背景信息。
