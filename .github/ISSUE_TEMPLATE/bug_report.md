@@ -1,38 +1,35 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+name: Bug 报告
+about: 报告一个问题，帮助我们改进
+title: '[BUG] '
+labels: bug
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**问题描述**
+简明扼要地描述这个 bug 是什么。
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**复现步骤**
+复现该问题的操作步骤：
+1. 进入 '...'
+2. 执行 '...'
+3. 看到错误
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**预期行为**
+描述你期望发生什么。
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**实际行为**
+描述实际发生了什么，与预期有何不同。
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**截图 / 日志**
+如有截图或错误日志，请粘贴在此处。
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**运行环境**
+- 部署方式：[ ] Docker  [ ] 源码编译  [ ] 其他
+- 操作系统：
+- Go 版本（源码编译时）：
+- 客户端类型：[ ] 浏览器  [ ] 其他，请说明：
 
-**Additional context**
-Add any other context about the problem here.
+**补充信息**
+其他任何有助于定位问题的信息。

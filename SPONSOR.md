@@ -1,23 +1,23 @@
-# ☕ Sponsor
+# ☕ 赞助
 
-If this project has been helpful to you, feel free to buy me a coffee ☕
+如果这个项目对你有帮助，欢迎请我喝杯咖啡 ☕
 
 ---
 
-## 💰 Ways to Sponsor
+## 💰 赞助方式
 
 <div align="center">
   <table>
     <tr>
       <td align="center">
-        <img src="https://raw.githubusercontent.com/palemoky/palemoky/main/assets/wechat_pay.png" alt="WeChat Pay QR Code" width="250" />
+        <img src="https://raw.githubusercontent.com/palemoky/palemoky/main/assets/wechat_pay.png" alt="微信" width="250" />
         <br />
-        WeChat Pay
+        微信
       </td>
       <td align="center">
-        <img src="https://raw.githubusercontent.com/palemoky/palemoky/main/assets/alipay.png" alt="Alipay QR Code" width="250" />
+        <img src="https://raw.githubusercontent.com/palemoky/palemoky/main/assets/alipay.png" alt="支付宝" width="250" />
         <br />
-        Alipay
+        支付宝
       </td>
     </tr>
   </table>
@@ -25,11 +25,11 @@ If this project has been helpful to you, feel free to buy me a coffee ☕
 
 ---
 
-## 🙏 Thank You
+## 🙏 感谢支持
 
-Thank you for your support! Your sponsorship will help me:
+感谢你的支持！你的赞助将帮助我：
 
-- ☕ Keep the coffee flowing and the code going
-- 🚀 Spend more time on open source projects
-- 💡 Explore new ideas and share what I learn
-- 🌱 Grow and give back to the community
+- ☕ 保持咖啡续命，代码不停
+- 🚀 投入更多时间在开源项目上
+- 💡 探索新想法并分享所学
+- 🌱 持续成长，回馈社区
